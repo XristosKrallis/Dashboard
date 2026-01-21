@@ -1,0 +1,47 @@
+﻿@*
+    Skydash Razor Pages Layout
+    Assets are flattened into wwwroot/
+*@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Dashboard</title>
+
+    <!-- Vendor CSS -->
+    <link rel="stylesheet" href="~/vendors/css/vendor.bundle.base.css" />
+
+    <!-- Plugin CSS -->
+    <link rel="stylesheet" href="~/vendors/jvectormap/jquery-jvectormap.css" />
+    <link rel="stylesheet" href="~/vendors/flag-icon-css/css/flag-icon.min.css" />
+    <link rel="stylesheet" href="~/vendors/owl-carousel-2/owl.carousel.min.css" />
+    <link rel="stylesheet" href="~/vendors/owl-carousel-2/owl.theme.default.min.css" />
+
+    <!-- Skydash Main CSS -->
+    <link rel="stylesheet" href="~/css/style.css" />
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="~/images/favicon.png" />
+
+    @RenderSection("Styles", required: false)
+</head>
+<body>
+
+    @RenderBody()
+
+    <!-- Vendor JS -->
+    <script src="~/vendors/js/vendor.bundle.base.js"></script>
+
+    <!-- Plugin JS -->
+    <script src="~/vendors/chart.js/chart.umd.js"></script>
+
+    <!-- Skydash Core JS -->
+    <script src="~/js/off-canvas.js"></script>
+    <script src="~/js/settings.js"></script>
+    <script src="~/js/todolist.js"></script>
+    <script src="~/js/template.js"></script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

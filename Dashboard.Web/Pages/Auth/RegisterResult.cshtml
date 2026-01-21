@@ -1,0 +1,43 @@
+﻿@page
+@model Dashboard.Web.Pages.Auth.RegisterResultModel
+@{
+    Layout = "_AuthLayout";
+}
+
+<div class="container-scroller">
+    <div class="container-fluid page-body-wrapper full-page-wrapper">
+        <div class="content-wrapper d-flex align-items-center auth px-0">
+            <div class="row w-100 mx-0">
+                <div class="col-lg-4 mx-auto">
+                    <div class="auth-form-light text-center py-5 px-4 px-sm-5">
+                        <div class="brand-logo">
+                            <img src="~/images/logo.svg" alt="logo" />
+                        </div>
+
+                        @if (Model.IsSuccess)
+                        {
+                            <h4>Registration Successful!</h4>
+                            <h6 class="font-weight-light">Your account has been created successfully. You can now log in.</h6>
+
+                            <div class="mt-4">
+                                <a asp-page="/Auth/Login" class="btn btn-primary btn-lg font-weight-medium">Go to Login</a>
+                            </div>
+                        }
+                        else
+                        {
+                            <h4>Registration Failed</h4>
+                            <h6 class="font-weight-light">Something went wrong.</h6>
+
+                            <div class="text-center mt-4 font-weight-light">
+                                <a asp-page="/Auth/Register" class="text-primary">Back to Registration</a>
+                            </div>
+                        }
+           
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- content-wrapper ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+</div>
