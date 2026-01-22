@@ -3,3 +3,14 @@
 @{
     ViewData["Title"] = "Home page";
 }
+
+<div class="grid-section">
+    @if (User.Identity.IsAuthenticated && (User.IsInRole("Admin") || User.IsInRole("SuperAdmin")))
+    {
+        @await Html.PartialAsync("DevExpress/_UsersGrid")
+    }
+    else
+    {
+        <p>You do not have permission to view this section.</p>
+    }
+</div>

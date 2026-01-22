@@ -1,38 +1,27 @@
-using Dashboard.Core.Data;
-using Dashboard.Core.Models;
-using Dashboard.Web.Pages.Auth;
+using Dashboard.Core.DTOs;
+using Dashboard.Core.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
-using System.Text;
-
-
 
 namespace Dashboard.Web.Pages.Auth
 {
     public class LoginModel : PageModel
     {
-        private readonly AppDbContext _db;
-        private readonly IPasswordHasher<User> _passwordHasher;
+        private readonly IAuthService _authService;
 
-        public LoginModel(AppDbContext db, IPasswordHasher<User> passwordHasher)
+        public LoginModel(IAuthService authService)
         {
-            _db = db;
-            _passwordHasher = passwordHasher;
+            _authService = authService;
         }
 
-        [BindProperty]
-        [Required]
-        [EmailAddress]
+        [BindProperty, Required]
         public string Email { get; set; }
 
-        [BindProperty]
-        [Required]
-        [DataType(DataType.Password)]
+        [BindProperty, Required]
         public string Password { get; set; }
 
         [BindProperty]
@@ -40,57 +29,47 @@ namespace Dashboard.Web.Pages.Auth
 
         public string ErrorMessage { get; set; }
 
-        public void OnGet()
-        {
-        }
-
         public async Task<IActionResult> OnPostAsync()
         {
-            ErrorMessage = null;
-
             if (!ModelState.IsValid)
                 return Page();
 
-            var user = _db.Users.FirstOrDefault(u => u.Email.ToLower() == Email.ToLower());
-
-            if (user == null || _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, Password) != PasswordVerificationResult.Success)
+            var result = await _authService.LoginAsync(new LoginRequest
             {
-                ErrorMessage = "Invalid email or password.";
+                Email = Email,
+                Password = Password,
+                RememberMe = RememberMe
+            });
+
+            if (!result.Success)
+            {
+                ErrorMessage = result.ErrorMessage;
                 return Page();
             }
 
-            var roles = _db.UserRoles
-                .Where(ur => ur.UserId == user.Id)
-                .Select(ur => ur.Role.Name)
-                .ToList();
-
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, user.Email),
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+                new Claim(ClaimTypes.Name, result.User.Email),
+                new Claim(ClaimTypes.NameIdentifier, result.User.Id.ToString())
             };
 
-            foreach (var role in roles)
-            {
+            foreach (var role in result.Roles)
                 claims.Add(new Claim(ClaimTypes.Role, role));
-            }
 
-            var claimsIdentity = new ClaimsIdentity(
-                claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-            var authProperties = new AuthenticationProperties
-            {
-                IsPersistent = RememberMe,
-                ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(20)
-            };
+            var identity = new ClaimsIdentity(
+                claims,
+                CookieAuthenticationDefaults.AuthenticationScheme);
 
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity),
-                authProperties);
+                new ClaimsPrincipal(identity),
+                new AuthenticationProperties
+                {
+                    IsPersistent = RememberMe,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(20)
+                });
 
             return RedirectToPage("/Index");
         }
-
     }
 }

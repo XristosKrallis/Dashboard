@@ -1,0 +1,9 @@
+﻿@if (User.Identity.IsAuthenticated &&
+    (User.IsInRole("Admin") || User.IsInRole("SuperAdmin")))
+{
+    <div class="card">
+        <div class="card-body">
+            <div id="usersGrid" style="min-height:600px;"></div>
+        </div>
+    </div>
+}

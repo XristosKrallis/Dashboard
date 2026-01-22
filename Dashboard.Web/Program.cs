@@ -1,5 +1,7 @@
 using Dashboard.Core.Data;
+using Dashboard.Core.Interfaces;
 using Dashboard.Core.Models;
+using Dashboard.Core.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -38,6 +40,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddRazorPages();
 
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 var app = builder.Build();

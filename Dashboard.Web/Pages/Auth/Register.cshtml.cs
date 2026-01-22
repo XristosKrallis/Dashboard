@@ -1,45 +1,30 @@
-using Dashboard.Core.Data;
-using Dashboard.Core.Models;
+using Dashboard.Core.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
+using Dashboard.Core.Services;
+using Dashboard.Core.Interfaces;
 
 namespace Dashboard.Web.Pages.Auth
 {
     public class RegisterModel : PageModel
     {
-        private readonly AppDbContext _db;
-        private readonly IPasswordHasher<User> _passwordHasher;
+        private readonly IAuthService _authService;
 
-        public RegisterModel(AppDbContext db, IPasswordHasher<User> passwordHasher)
+        public RegisterModel(IAuthService authService)
         {
-            _db = db;
-            _passwordHasher = passwordHasher;
+            _authService = authService;
         }
 
-        [BindProperty]
-        [Required]
-        public string Username { get; set; }
+        [BindProperty][Required] public string Username { get; set; }
 
-        [BindProperty]
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; }
+        [BindProperty][Required][EmailAddress] public string Email { get; set; }
 
-        [BindProperty]
-        [Required]
-        [DataType(DataType.Password)]
-        public string Password { get; set; }
+        [BindProperty][Required][DataType(DataType.Password)] public string Password { get; set; }
 
-        [BindProperty]
-        [Required]
-        [Compare("Password", ErrorMessage = "Passwords do not match.")]
-        [DataType(DataType.Password)]
-        public string ConfirmPassword { get; set; }
+        [BindProperty][Required] [Compare("Password", ErrorMessage = "Passwords do not match.")] [DataType(DataType.Password)] public string ConfirmPassword { get; set; }
 
-        [BindProperty]
-        public string Country { get; set; }
+        [BindProperty] public string Country { get; set; }
 
         public string ErrorMessage { get; set; }
 
@@ -47,42 +32,27 @@ namespace Dashboard.Web.Pages.Auth
         {
         }
 
-        public IActionResult OnPost()
+        //An thelw na pros8esw sto register, dto, form klp klp
+        public async Task<IActionResult> OnPostAsync()
         {
-            ErrorMessage = null;
-
             if (!ModelState.IsValid)
                 return Page();
 
-            if (_db.Users.Any(u => u.Email.ToLower() == Email.ToLower()))
+            var result = await _authService.RegisterAsync(new RegisterRequest
             {
-                ErrorMessage = "Email is already registered.";
+                Email = Email,
+                Username = Username,
+                Password = Password
+            });
+
+            if (!result.Success)
+            {
+                ErrorMessage = result.ErrorMessage;
                 return Page();
             }
 
-            var user = new User
-            {
-                Username = Username,
-                Email = Email,
-                Country = Country 
-            };
-
-            user.PasswordHash = _passwordHasher.HashPassword(user, Password);
-
-            var role = _db.Roles.FirstOrDefault(r => r.Name == "User");
-            if (role != null)
-            {
-                _db.UserRoles.Add(new UserRole
-                {
-                    User = user,
-                    Role = role
-                });
-            }
-
-            _db.Users.Add(user);
-            _db.SaveChanges();
-
-            return RedirectToPage("/Auth/RegisterResult", new { isSuccess = true });
+            //An ginei kati stin basi na epistrefw false
+            return RedirectToPage("/Auth/RegisterResult", new { IsSuccess = true });
         }
     }
 }

@@ -1,41 +1,79 @@
 ﻿using Dashboard.Core.Data;
+using Dashboard.Core.DTOs;
+using Dashboard.Core.Interfaces;
 using Dashboard.Core.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace Dashboard.Core.Services
 {
-    public class AuthService
+    public class AuthService : IAuthService
     {
-        private readonly AppDbContext _context;
+        private readonly AppDbContext _db;
+        private readonly IPasswordHasher<User> _hasher;
 
-        public AuthService(AppDbContext context)
+        public AuthService(AppDbContext db, IPasswordHasher<User> hasher)
         {
-            _context = context;
+            _db = db;
+            _hasher = hasher;
         }
 
-        public async Task<User?> ValidateUserAsync(string email, string password)
+        public async Task<LoginResult> LoginAsync(LoginRequest request)
         {
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == email);
+            var user = await _db.Users
+                .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.ToLower());
 
             if (user == null)
-                return null;
+                return new LoginResult { Success = false, ErrorMessage = "Invalid email or password." };
 
-            if (!VerifyPassword(password, user.PasswordHash))
-                return null;
+            var verify = _hasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
 
-            return user;
+            if (verify != PasswordVerificationResult.Success)
+                return new LoginResult { Success = false, ErrorMessage = "Invalid email or password." };
+
+            return new LoginResult
+            {
+                Success = true,
+                User = user,
+                Roles = user.UserRoles.Select(r => r.Role.Name).ToList()
+            };
         }
-
-        private bool VerifyPassword(string password, string storedHash)
+        public async Task<RegisterResult> RegisterAsync(RegisterRequest request)
         {
-            using var sha = SHA256.Create();
-            var hashBytes = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
-            var hash = Convert.ToBase64String(hashBytes);
+            if (await _db.Users.AnyAsync(u => u.Email == request.Email))
+                return new RegisterResult
+                {
+                    Success = false,
+                    ErrorMessage = "Email already exists."
+                };
 
-            return hash == storedHash;
+            var user = new User
+            {
+                Email = request.Email,
+                Username = request.Username,
+            };
+
+            user.PasswordHash = _hasher.HashPassword(user, request.Password);
+
+            _db.Users.Add(user);
+            await _db.SaveChangesAsync();
+
+            var userRole = new UserRole
+            {
+                UserId = user.Id,
+                RoleId = _db.Roles.First(r => r.Name == "User").Id
+            };
+
+            _db.UserRoles.Add(userRole);
+            await _db.SaveChangesAsync();
+
+            return new RegisterResult
+            {
+                Success = true,
+                UserId = user.Id
+            };
         }
     }
 }
