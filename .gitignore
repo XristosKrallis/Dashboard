@@ -367,3 +367,5 @@ FodyWeavers.xsd
 /Dashboard.Core/appsettings.json
 /Dashboard.Core/appsettings.Development.json
 /Dashboard.Api/appsettings.json
+/Dashboard.Api/appsettings.Development.json
+/Dashboard.Api/appsettings.Development.json
