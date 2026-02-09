@@ -1,4 +1,48 @@
-﻿<div class="card mb-4">
+﻿<script>
+    function onGridSaving(e) {
+        // Only handle insert/update manually
+        if (!e.changes || e.changes.length === 0) return;
+
+        var change = e.changes[0];
+
+        if (change.type === "insert" || change.type === "update") {
+            e.cancel = true; // cancel default insert/update
+
+            var grid = $("#workhours-grid").dxDataGrid("instance");
+            var chart = $("#dailyWorkHoursChart").dxChart("instance");
+
+            var data, method, action;
+
+            if (change.type === "insert") {
+                data = change.data;
+                method = "POST";
+                action = "/WorkHoursProxy/InsertWorkHours";
+            } else if (change.type === "update") {
+                var originalData = grid.getDataSource().items().find(x => x.id === change.key);
+                data = Object.assign({}, originalData, change.data, { id: change.key });
+                method = "PUT";
+                action = "/WorkHoursProxy/UpdateWorkHours";
+            }
+
+            $.ajax({
+                url: action,
+                type: method,
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function(response) {
+                    grid.refresh();
+                    chart.refresh();
+                    grid.cancelEditData();
+                },
+                error: function(err) {
+                    DevExpress.ui.notify("Error saving data", "error", 3000);
+                }
+            });
+        }
+    }
+</script>
+
+<div class="card mb-4">
     <div class="card-header">
         <h5 class="mb-0 fw-bold">Daily Work Hours</h5>
     </div>
@@ -7,12 +51,10 @@
         @(Html.DevExtreme().DataGrid()
                 .ID("workhours-grid")
                 .DataSource(d => d.WebApi()
-                .Controller("WorkHoursProxy")
-                .LoadAction("LoadWorkHours")
-                .InsertAction("InsertWorkHours")
-                .UpdateAction("UpdateWorkHours")
-                .DeleteAction("DeleteWorkHours")
-                .Key("id")
+                    .Controller("WorkHoursProxy")
+                    .LoadAction("LoadWorkHours")
+                    .DeleteAction("DeleteWorkHours")
+                    .Key("id")
                 )
                 .ShowBorders(true)
                 .RowAlternationEnabled(true)
@@ -45,64 +87,58 @@
                     .Caption("Time Off");
                 })
                 .Editing(edit => edit
-                .Mode(GridEditMode.Popup)
-                .AllowAdding(true)
-                .AllowUpdating(true)
-                .AllowDeleting(true)
-                .ConfirmDelete(true)
-                .Popup(p => p
-                .MinWidth(300)
-                .MaxWidth(700)
-                .Height("auto")
-                .Title("Work Hours")
-                .ShowTitle(true)
-                )
-                .Form(f => f.Items(items =>
-                {
-                    items.AddSimple()
-                    .DataField("workDate")
-                    .Editor(e => e.DateBox()
-                    .Type(DateBoxType.Date)
-                    .DisplayFormat("yyyy-MM-dd")
-                    .DisabledDates(new JS(
-                    @"function (data) {
-                const grid = $('#workhours-grid').dxDataGrid('instance');
-                const items = grid.getDataSource().items();
+                    .Mode(GridEditMode.Popup)
+                    .AllowAdding(true)
+                    .AllowUpdating(true)
+                    .AllowDeleting(true)
+                    .ConfirmDelete(true)
+                    .Popup(p => p
+                    .MinWidth(300)
+                    .MaxWidth(700)
+                    .Height("auto")
+                    .Title("Work Hours")
+                    .ShowTitle(true)
+                    )
+                    .Form(f => f.Items(items =>
+                    {
+                        items.AddSimple()
+                        .DataField("workDate")
+                        .Editor(e => e.DateBox()
+                        .Type(DateBoxType.Date)
+                        .DisplayFormat("yyyy-MM-dd")
+                        .DisabledDates(new JS(
+                        @"function (data) {
+                                const grid = $('#workhours-grid').dxDataGrid('instance');
+                                const items = grid.getDataSource().items();
 
-                // Apply rules only when ADDING a new row
-                const isNewRow = !data.component.option('value');
+                                const cellDate = data.date;
+                                const cellKey = cellDate.toDateString();
 
-                if (!isNewRow) {
-                return false;
-                }
+                                // Rule 1: weekends
+                                const isWeekend = cellDate.getDay() === 0 || cellDate.getDay() === 6;
 
-                const cellDate = data.date;
-                const cellKey = cellDate.toDateString();
+                                // Rule 2: future dates
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                const isFuture = cellDate > today;
 
-                // Rule 1: weekends
-                const isWeekend = cellDate.getDay() === 0 || cellDate.getDay() === 6;
+                                // Rule 3: duplicate dates already in grid
+                                const isDuplicate = items.some(x =>
+                                x.workDate &&
+                                new Date(x.workDate).toDateString() === cellKey
+                                );
 
-                // Rule 2: future dates
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const isFuture = cellDate > today;
+                                return isWeekend || isFuture || isDuplicate;
+                                }"
+                        ))
+                        );
 
-                // Rule 3: duplicate dates already in grid
-                const isDuplicate = items.some(x =>
-                x.workDate &&
-                new Date(x.workDate).toDateString() === cellKey
-                );
-
-                return isWeekend || isFuture || isDuplicate;
-                }"
-                    ))
-                    );
-
-                    items.AddSimple().DataField("regularWork");
-                    items.AddSimple().DataField("overtime");
-                    items.AddSimple().DataField("timeOff");
-                }))
-                )
+                        items.AddSimple().DataField("regularWork");
+                        items.AddSimple().DataField("overtime");
+                        items.AddSimple().DataField("timeOff");
+                    }))
+                    )
+                .OnSaving("onGridSaving")
                 )
     </div>
 </div>

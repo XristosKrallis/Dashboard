@@ -25,10 +25,22 @@ namespace Dashboard.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<WorkHoursDto>>> Get()
+        public async Task<ActionResult<IEnumerable<WorkHoursDto>>> Get(
+            [FromQuery] DateTime? startDate,
+            [FromQuery] DateTime? endDate)
         {
             var userId = GetCurrentUserId();
-            var workHours = await _workhours.GetAllAsync(userId);
+            IEnumerable<WorkHoursDto> workHours;
+
+            if (startDate == null || endDate == null)
+            {
+                workHours = await _workhours.GetAllAsync(userId);
+            }
+            else
+            {
+                workHours = await _workhours.GetByDateRangeAsync(userId, startDate.Value, endDate.Value);
+            }
+
             return Ok(workHours);
         }
 

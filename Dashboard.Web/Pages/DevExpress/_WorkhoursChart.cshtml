@@ -21,13 +21,17 @@
         @(Html.DevExtreme().Chart()
             .ID("dailyWorkHoursChart")
             .CommonSeriesSettings(s => s
-                .ArgumentField("Date")
+                .ArgumentField("workDate")
                 .Type(SeriesType.StackedBar)
             )
+            .ArgumentAxis(a => a.Label(l => l
+                .Format("yyyy-MM-dd") 
+                .OverlappingBehavior(OverlappingBehavior.Rotate)
+            ))
             .Series(s => {
-                s.Add().ValueField("RegularHours").Name("Regular Work");
-                s.Add().ValueField("OvertimeHours").Name("Overtime");
-                s.Add().ValueField("TimeOffHours").Name("Time Off");
+                s.Add().ValueField("regularWork").Name("Regular Work");
+                s.Add().ValueField("overtime").Name("Overtime");
+                s.Add().ValueField("timeOff").Name("Time Off");
             })
             .Legend(l => l
                 .VerticalAlignment(VerticalEdge.Top)
@@ -48,7 +52,7 @@
             .ArgumentAxis(a => a.Label(l => l.OverlappingBehavior(OverlappingBehavior.Rotate)))
             .Export(e => e.Enabled(true))
             .DataSource(ds => ds.WebApi()
-                .Controller("WorkHours")
+                .Controller("WorkHoursProxy")
                 .LoadAction("GetByDateRange")
                 .LoadParams(new {
                     startDate = new JS("getStartDate"),
@@ -61,11 +65,13 @@
 
 <script>
 function getStartDate() {
-    return $("#workHoursRange").dxDateRangeBox("instance").option("startDate");
+    var start = $("#workHoursRange").dxDateRangeBox("instance").option("startDate");
+    return start.toISOString().split('T')[0];
 }
 
 function getEndDate() {
-    return $("#workHoursRange").dxDateRangeBox("instance").option("endDate");
+    var end = $("#workHoursRange").dxDateRangeBox("instance").option("endDate");
+    return end.toISOString().split('T')[0];
 }
 
 function onDateRangeChanged(e) {

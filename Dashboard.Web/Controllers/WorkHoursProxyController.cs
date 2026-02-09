@@ -52,15 +52,8 @@ public class WorkHoursProxyController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> InsertWorkHours([FromForm] IFormCollection form)
+    public async Task<IActionResult> InsertWorkHours([FromBody] WorkHoursDto dto)
     {
-        var valuesJson = form["values"];
-
-        var dto = System.Text.Json.JsonSerializer.Deserialize<WorkHoursDto>(
-            valuesJson,
-            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-        )!;
-
         using var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:7170/api/WorkHours")
         {
             Content = JsonContent.Create(dto)
@@ -75,16 +68,10 @@ public class WorkHoursProxyController : Controller
     }
 
     [HttpPut]
-    public async Task<IActionResult> UpdateWorkHours([FromForm] int key, [FromForm] IFormCollection form)
+    public async Task<IActionResult> UpdateWorkHours([FromBody] WorkHoursDto dto)
     {
-        var valuesJson = form["values"];
 
-        var dto = System.Text.Json.JsonSerializer.Deserialize<WorkHoursDto>(
-            valuesJson,
-            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-        )!;
-
-        var request = new HttpRequestMessage(HttpMethod.Put, $"https://localhost:7170/api/WorkHours/{key}")
+        var request = new HttpRequestMessage(HttpMethod.Put, $"https://localhost:7170/api/WorkHours/{dto.Id}")
         {
             Content = JsonContent.Create(dto)
         };
@@ -110,5 +97,36 @@ public class WorkHoursProxyController : Controller
 
         return Json(new { success = true });
     }
-}
 
+    [HttpGet]
+    public async Task<IActionResult> GetByDateRange([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
+    {
+        var requestUrl = $"https://localhost:7170/api/WorkHours?startDate={startDate:yyyy-MM-dd}&endDate={endDate:yyyy-MM-dd}";
+        var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+        AttachJwtHeader(request);
+
+        var response = await _http.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        var workHours = await response.Content.ReadFromJsonAsync<List<WorkHoursDto>>();
+
+        var dates = Enumerable.Range(0, (endDate - startDate).Days + 1)
+                              .Select(i => startDate.AddDays(i))
+                              .ToList();
+
+        var result = dates.Select(date =>
+        {
+            var entry = workHours.FirstOrDefault(w => w.WorkDate.Date == date.Date);
+
+            return new 
+            {
+                WorkDate = date.ToString("yyyy-MM-dd"),
+                RegularWork = entry?.RegularWork ?? 0,
+                Overtime = entry?.Overtime ?? 0,
+                TimeOff = entry?.TimeOff ?? 0
+            };
+        }).ToList();
+
+        return Json(result);
+    }
+}

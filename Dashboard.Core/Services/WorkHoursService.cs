@@ -22,6 +22,7 @@ namespace Dashboard.Core.Services
                 .Select(w => new WorkHoursDto
                 {
                     Id = w.Id,
+                    WorkDate = w.WorkDate,
                     RegularWork = w.RegularWork,
                     Overtime = w.Overtime,
                     TimeOff = w.TimeOff
@@ -35,6 +36,7 @@ namespace Dashboard.Core.Services
             var entity = new WorkHours
             {
                 UserId = userId,
+                WorkDate = dto.WorkDate,
                 RegularWork = dto.RegularWork,
                 Overtime = dto.Overtime,
                 TimeOff = dto.TimeOff
@@ -55,6 +57,7 @@ namespace Dashboard.Core.Services
             if (entity == null)
                 return null;
 
+            entity.WorkDate = dto.WorkDate;
             entity.RegularWork = dto.RegularWork;
             entity.Overtime = dto.Overtime;
             entity.TimeOff = dto.TimeOff;
@@ -64,6 +67,7 @@ namespace Dashboard.Core.Services
             return new WorkHoursDto
             {
                 Id = entity.Id,
+                WorkDate = entity.WorkDate,
                 RegularWork = entity.RegularWork,
                 Overtime = entity.Overtime,
                 TimeOff = entity.TimeOff
@@ -84,5 +88,23 @@ namespace Dashboard.Core.Services
 
             return true;
         }
+
+        public async Task<IEnumerable<WorkHoursDto>> GetByDateRangeAsync(int userId, DateTime startDate, DateTime endDate)
+        {
+            return await _db.WorkHours
+                .Where(w => w.UserId == userId
+                            && w.WorkDate.Date >= startDate.Date
+                            && w.WorkDate.Date <= endDate.Date)
+                .Select(w => new WorkHoursDto
+                {
+                    Id = w.Id,
+                    WorkDate = w.WorkDate,
+                    RegularWork = w.RegularWork,
+                    Overtime = w.Overtime,
+                    TimeOff = w.TimeOff
+                })
+                .ToListAsync();
+        }
+
     }
 }
