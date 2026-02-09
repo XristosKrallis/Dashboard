@@ -13,6 +13,7 @@ namespace Dashboard.Core.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
+        public DbSet<WorkHours> WorkHours { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -30,6 +31,12 @@ namespace Dashboard.Core.Data
                 .HasOne(ur => ur.Role)
                 .WithMany(r => r.UserRoles)
                 .HasForeignKey(ur => ur.RoleId);
+
+            modelBuilder.Entity<WorkHours>()
+               .HasOne(w => w.User)
+               .WithMany()
+               .HasForeignKey(w => w.UserId)
+               .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

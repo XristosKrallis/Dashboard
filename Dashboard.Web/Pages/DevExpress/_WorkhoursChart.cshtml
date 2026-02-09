@@ -1,0 +1,75 @@
+﻿<div class="card mb-4">
+    <div class="card-header">
+        <div class="row align-items-center">
+            <div class="col-12 col-lg-8 text-center text-lg-start">
+                <h5 class="mb-0 fw-bold">Daily Work Hours Review</h5>
+            </div>
+            <div class="col-12 col-lg-4 text-lg-end mt-2 mt-lg-0">
+                @(Html.DevExtreme().DateRangeBox()
+                    .ID("workHoursRange")
+                    .DisplayFormat("yyyy-MM-dd")
+                    .MultiView(false)
+                    .StartDate(DateTime.Today.AddDays(-7))
+                    .EndDate(DateTime.Today)
+                    .OnValueChanged("onDateRangeChanged")
+                )
+            </div>
+        </div>
+    </div>
+
+    <div class="card-body p-3">
+        @(Html.DevExtreme().Chart()
+            .ID("dailyWorkHoursChart")
+            .CommonSeriesSettings(s => s
+                .ArgumentField("Date")
+                .Type(SeriesType.StackedBar)
+            )
+            .Series(s => {
+                s.Add().ValueField("RegularHours").Name("Regular Work");
+                s.Add().ValueField("OvertimeHours").Name("Overtime");
+                s.Add().ValueField("TimeOffHours").Name("Time Off");
+            })
+            .Legend(l => l
+                .VerticalAlignment(VerticalEdge.Top)
+                .HorizontalAlignment(HorizontalAlignment.Center)
+                .ItemTextPosition(Position.Right)
+            )
+            .Title(t => t.Text("")) 
+            .Tooltip(t => t
+                .Enabled(true)
+                .CustomizeTooltip(@<text>
+                    function(arg) {
+                        return {
+                            text: arg.seriesName + ": " + arg.valueText + "h"
+                        };
+                    }
+                </text>)
+            )
+            .ArgumentAxis(a => a.Label(l => l.OverlappingBehavior(OverlappingBehavior.Rotate)))
+            .Export(e => e.Enabled(true))
+            .DataSource(ds => ds.WebApi()
+                .Controller("WorkHours")
+                .LoadAction("GetByDateRange")
+                .LoadParams(new {
+                    startDate = new JS("getStartDate"),
+                    endDate = new JS("getEndDate")
+                })
+            )
+        )
+    </div>
+</div>
+
+<script>
+function getStartDate() {
+    return $("#workHoursRange").dxDateRangeBox("instance").option("startDate");
+}
+
+function getEndDate() {
+    return $("#workHoursRange").dxDateRangeBox("instance").option("endDate");
+}
+
+function onDateRangeChanged(e) {
+    var chart = $("#dailyWorkHoursChart").dxChart("instance");
+    chart.getDataSource().reload();
+}
+</script>

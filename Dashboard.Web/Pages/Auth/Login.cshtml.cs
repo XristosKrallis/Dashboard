@@ -12,10 +12,12 @@ namespace Dashboard.Web.Pages.Auth
     public class LoginModel : PageModel
     {
         private readonly IAuthService _authService;
+        private readonly IJwtService _jwtService;
 
-        public LoginModel(IAuthService authService)
+        public LoginModel(IAuthService authService, IJwtService jwtService)
         {
             _authService = authService;
+            _jwtService = jwtService;
         }
 
         [BindProperty, Required]
@@ -47,27 +49,36 @@ namespace Dashboard.Web.Pages.Auth
                 return Page();
             }
 
+            var identity = result.Identity!;
+
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, result.User.Email),
-                new Claim(ClaimTypes.NameIdentifier, result.User.Id.ToString())
+                new Claim(ClaimTypes.NameIdentifier, identity.Id),
+                new Claim(ClaimTypes.Email, identity.Email),
+                new Claim(ClaimTypes.Name, identity.Username)
             };
 
-            foreach (var role in result.Roles)
+            foreach (var role in identity.Roles)
+            {
                 claims.Add(new Claim(ClaimTypes.Role, role));
+            }
 
-            var identity = new ClaimsIdentity(
+            var claimsIdentity = new ClaimsIdentity(
                 claims,
                 CookieAuthenticationDefaults.AuthenticationScheme);
 
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = RememberMe,
+                ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(20)
+            };
+
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(identity),
-                new AuthenticationProperties
-                {
-                    IsPersistent = RememberMe,
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(20)
-                });
+                new ClaimsPrincipal(claimsIdentity),
+                authProperties);
+
+            var jwt = _jwtService.CreateToken(identity);
 
             return RedirectToPage("/Index");
         }

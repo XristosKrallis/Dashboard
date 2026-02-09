@@ -1,0 +1,88 @@
+﻿using Dashboard.Core.Data;
+using Dashboard.Core.DTOs;
+using Dashboard.Core.Interfaces;
+using Dashboard.Core.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace Dashboard.Core.Services
+{
+    public class WorkHoursService : IWorkHoursService
+    {
+        private readonly AppDbContext _db;
+
+        public WorkHoursService(AppDbContext db)
+        {
+            _db = db;
+        }
+
+        public async Task<IEnumerable<WorkHoursDto>> GetAllAsync(int userId)
+        {
+            return await _db.WorkHours
+                .Where(w => w.UserId == userId)
+                .Select(w => new WorkHoursDto
+                {
+                    Id = w.Id,
+                    RegularWork = w.RegularWork,
+                    Overtime = w.Overtime,
+                    TimeOff = w.TimeOff
+                })
+                .ToListAsync();
+        }
+
+        public async Task<WorkHoursDto> CreateAsync(int userId, WorkHoursDto dto)
+        {
+            Console.WriteLine($"WorkHours GET called for user ID: {dto.TimeOff}");
+            var entity = new WorkHours
+            {
+                UserId = userId,
+                RegularWork = dto.RegularWork,
+                Overtime = dto.Overtime,
+                TimeOff = dto.TimeOff
+            };
+
+            _db.WorkHours.Add(entity);
+            await _db.SaveChangesAsync();
+
+            dto.Id = entity.Id;
+            return dto;
+        }
+
+        public async Task<WorkHoursDto?> UpdateAsync(int userId, int id, WorkHoursDto dto)
+        {
+            var entity = await _db.WorkHours
+                .FirstOrDefaultAsync(w => w.Id == id && w.UserId == userId);
+
+            if (entity == null)
+                return null;
+
+            entity.RegularWork = dto.RegularWork;
+            entity.Overtime = dto.Overtime;
+            entity.TimeOff = dto.TimeOff;
+
+            await _db.SaveChangesAsync();
+
+            return new WorkHoursDto
+            {
+                Id = entity.Id,
+                RegularWork = entity.RegularWork,
+                Overtime = entity.Overtime,
+                TimeOff = entity.TimeOff
+            };
+        }
+
+        public async Task<bool> DeleteAsync(int userId, int id)
+        {
+            Console.WriteLine($"ID:{id}, UserID:{userId}");
+            var entity = await _db.WorkHours
+                .FirstOrDefaultAsync(w => w.Id == id && w.UserId == userId);
+
+            if (entity == null)
+                return false;
+            
+            _db.WorkHours.Remove(entity);
+            await _db.SaveChangesAsync();
+
+            return true;
+        }
+    }
+}

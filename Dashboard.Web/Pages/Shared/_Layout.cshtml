@@ -24,43 +24,67 @@
     <!-- Favicon -->
     <link rel="shortcut icon" href="~/images/favicon.png" />
 
-    <link rel="stylesheet" href="https://cdn3.devexpress.com/jslib/23.1.3/css/dx.light.css" />
-    
+    <link rel="stylesheet" href="https://cdn3.devexpress.com/jslib/23.2.3/css/dx.light.css" />
+
+    <!-- Vendor JS -->
+    <script src="~/vendors/js/vendor.bundle.base.js"></script>
+
+    <!-- Plugin JS -->
+    <script src="~/vendors/chart.js/chart.umd.js"></script>
+    <script src="~/vendors/progressbar.js/progressbar.min.js"></script>
+    <script src="~/vendors/jvectormap/jquery-jvectormap.min.js"></script>
+    <script src="~/vendors/jvectormap/jquery-jvectormap-world-mill-en.js"></script>
+    <script src="~/vendors/owl-carousel-2/owl.carousel.min.js"></script>
+
+    <!-- Skydash Core JS -->
+    <script src="~/js/off-canvas.js"></script>
+    <script src="~/js/hoverable-collapse.js"></script>
+    <script src="~/js/misc.js"></script>
+    <script src="~/js/settings.js"></script>
+    <script src="~/js/todolist.js"></script>
+    <script src="~/js/template.js"></script>
+
+    <script src="https://cdn3.devexpress.com/jslib/23.2.3/js/dx.all.js"></script>
+    <script src="https://cdn3.devexpress.com/jslib/23.2.3/js/dx.aspnet.mvc.js"></script>
+    <script src="https://cdn3.devexpress.com/jslib/23.2.7/js/dx.aspnet.data.js"></script>
 
 
     @RenderSection("Styles", required: false)
+    
 </head>
 <body>
     <div class="container-scroller">
 
         <!-- TOP NAVBAR -->
-        <nav class="navbar default-layout-navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
-            <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
-                <a class="navbar-brand brand-logo" asp-page="/Dashboard/Index">
+        
+
+        <nav class="navbar col-lg-12 col-12 p-0 d-flex flex-row fixed-top">
+            <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-start">
+                <a class="navbar-brand brand-logo" asp-page="/Index">
                     <img src="~/images/logo.svg" alt="logo" />
                 </a>
-                <a class="navbar-brand brand-logo-mini" asp-page="/Dashboard/Index">
+                <a class="navbar-brand brand-logo-mini" asp-page="/Index">
                     <img src="~/images/logo-mini.svg" alt="logo" />
                 </a>
             </div>
-
-            <div class="navbar-menu-wrapper d-flex align-items-stretch">
-                <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize">
-                    <span class="mdi mdi-menu"></span>
-                </button>
-
+            <div class="navbar-menu-wrapper d-flex align-items-center justify-content-end">
                 <ul class="navbar-nav navbar-nav-right">
-                    <li class="nav-item">
-                        <span class="nav-link">Welcome</span>
-                    </li>
-
                     @if (User.Identity.IsAuthenticated)
                     {
-                        <li class="nav-item">
-                            <span class="nav-link">Hello, @User.Identity.Name!</span>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link btn btn-outline-danger" asp-page="/Auth/Logout">Logout</a>
+                        <li class="nav-item nav-profile dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" id="profileDropdown" aria-expanded="false">
+                                <img src="../assets/images/faces/face28.jpg" alt="profile">
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
+                                <a class="dropdown-item" asp-page="/Auth/Settings">
+                                    <i class="ti-settings text-primary"></i>
+                                    Settings
+                                </a>
+                                <a class="dropdown-item" asp-page="/Auth/Logout">
+                                    <i class="ti-power-off text-primary"></i>
+                                    Logout
+                                </a>
+                            </div>
                         </li>
                     }
                     else
@@ -72,7 +96,7 @@
                 </ul>
             </div>
         </nav>
-
+        
         <div class="container-fluid page-body-wrapper">
 
             <!-- SIDEBAR -->
@@ -81,7 +105,7 @@
                     <li class="nav-item nav-category">Main</li>
 
                     <li class="nav-item">
-                        <a class="nav-link" asp-page="/Dashboard/Index">
+                        <a class="nav-link" asp-page="/Index">
                             <span class="menu-title">Dashboard</span>
                             <i class="mdi mdi-view-dashboard menu-icon"></i>
                         </a>
@@ -106,47 +130,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Vendor JS -->
-    <script src="~/vendors/js/vendor.bundle.base.js"></script>
-
-    <!-- Plugin JS -->
-    <script src="~/vendors/chart.js/chart.umd.js"></script>
-    <script src="~/vendors/progressbar.js/progressbar.min.js"></script>
-    <script src="~/vendors/jvectormap/jquery-jvectormap.min.js"></script>
-    <script src="~/vendors/jvectormap/jquery-jvectormap-world-mill-en.js"></script>
-    <script src="~/vendors/owl-carousel-2/owl.carousel.min.js"></script>
-
-    <!-- Skydash Core JS -->
-    <script src="~/js/off-canvas.js"></script>
-    <script src="~/js/hoverable-collapse.js"></script>
-    <script src="~/js/misc.js"></script>
-    <script src="~/js/settings.js"></script>
-    <script src="~/js/todolist.js"></script>
-    <script src="~/js/template.js"></script>
-
-    <script src="https://cdn3.devexpress.com/jslib/23.1.3/js/dx.all.js"></script>
-    <script>
-        $(function () {
-            var gridElement = $("#usersGrid");
-
-            if (gridElement.length) {
-                gridElement.dxDataGrid({
-                    dataSource: "https://localhost:7170/api/Users",
-                    columns: [
-                        { dataField: "email", caption: "Email" },
-                        { dataField: "username", caption: "Username" },
-                        { dataField: "country", caption: "Country" },
-                        { dataField: "roles", caption: "Roles" }
-                    ],
-                    showFilterRow: true,
-                    showGroupPanel: true,
-                    columnAutoWidth: true,
-                    noDataText: "No users available."
-                });
-            }
-        });
-    </script>
     @RenderSection("Scripts", required: false)
 </body>
 </html>

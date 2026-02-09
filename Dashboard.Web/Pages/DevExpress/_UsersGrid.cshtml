@@ -1,9 +1,68 @@
 ﻿@if (User.Identity.IsAuthenticated &&
     (User.IsInRole("Admin") || User.IsInRole("SuperAdmin")))
 {
-    <div class="card">
-        <div class="card-body">
-            <div id="usersGrid" style="min-height:600px;"></div>
+    <div class="card mb-4">
+        <div class="card-header fw-bold">
+            User Management
         </div>
+
+        <div class="card-body p-3">
+            @(Html.DevExtreme().DataGrid()
+                    .ID("users-grid")
+                    .DataSource(d => d.WebApi()
+                    .Controller("UsersProxy")
+                    .LoadAction("LoadUsers")
+                    .InsertAction("InsertUser")
+                    .UpdateAction("UpdateUser")
+                    .DeleteAction("DeleteUser")
+                    .Key("id")
+                    )
+                    .ShowBorders(true)
+                    .RowAlternationEnabled(true)
+                    .RemoteOperations(false)
+                    .Paging(p => p.PageSize(10))
+                    .SearchPanel(s => s.Visible(true))
+                    .Columns(columns =>
+                    {
+                        columns.Add()
+                    .DataField("username")
+                    .Caption("Username");
+
+                        columns.Add()
+                    .DataField("email")
+                    .Caption("Email");
+
+                        columns.Add()
+                    .DataField("roles")
+                    .Caption("Roles");
+                    })
+                    .Editing(edit => edit
+                    .Mode(GridEditMode.Popup)
+                    .AllowAdding(true)
+                    .AllowUpdating(true)
+                    .AllowDeleting(true)
+                    .ConfirmDelete(true)
+                    .Popup(p => p
+                    .MinWidth(300)
+                    .MaxWidth(700)
+                    .Height("auto")
+                    .Title("Employee Info")
+                    .ShowTitle(true)
+                    )
+                    .Form(f => f.Items(items =>
+                    {
+                        items.AddSimple().DataField("username");
+                        items.AddSimple().DataField("email");
+
+                        items.AddSimple()
+                    .DataField("roles")
+                    .ColSpan(2)
+                    .Editor(e => e.TagBox()
+                    .DataSource(new[] { "User", "Admin", "SuperAdmin" })
+                    );
+                    }))
+                    )
+                    )
     </div>
+</div>
 }

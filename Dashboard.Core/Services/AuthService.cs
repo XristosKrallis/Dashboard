@@ -23,23 +23,41 @@ namespace Dashboard.Core.Services
             var user = await _db.Users
                 .Include(u => u.UserRoles)
                 .ThenInclude(ur => ur.Role)
-                .FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.ToLower());
+                .FirstOrDefaultAsync(u =>
+                    u.Email.ToLower() == request.Email.ToLower());
 
             if (user == null)
-                return new LoginResult { Success = false, ErrorMessage = "Invalid email or password." };
+                return new LoginResult
+                {
+                    Success = false,
+                    ErrorMessage = "Invalid email or password."
+                };
 
-            var verify = _hasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
+            var verify = _hasher.VerifyHashedPassword(
+                user, user.PasswordHash, request.Password);
 
             if (verify != PasswordVerificationResult.Success)
-                return new LoginResult { Success = false, ErrorMessage = "Invalid email or password." };
+                return new LoginResult
+                {
+                    Success = false,
+                    ErrorMessage = "Invalid email or password."
+                };
 
             return new LoginResult
             {
                 Success = true,
-                User = user,
-                Roles = user.UserRoles.Select(r => r.Role.Name).ToList()
+                Identity = new UserIdentity
+                {
+                    Id = user.Id.ToString(),
+                    Username = user.Username,
+                    Email = user.Email,
+                    Roles = user.UserRoles
+                        .Select(r => r.Role.Name)
+                        .ToList()
+                }
             };
         }
+
         public async Task<RegisterResult> RegisterAsync(RegisterRequest request)
         {
             if (await _db.Users.AnyAsync(u => u.Email == request.Email))

@@ -1,4 +1,5 @@
 using Dashboard.Core.Data;
+using Dashboard.Core.DTOs;
 using Dashboard.Core.Interfaces;
 using Dashboard.Core.Models;
 using Dashboard.Core.Services;
@@ -36,12 +37,19 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.SlidingExpiration = true;
     });
 
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
+builder.Services.AddScoped<IJwtService, JwtTokenService>();
+
+builder.Services.AddHttpClient();
+
 builder.Services.AddAuthorization();
 
 builder.Services.AddRazorPages();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
+
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+
 
 var app = builder.Build();
 
@@ -54,7 +62,7 @@ if (app.Environment.IsDevelopment())
     }
 }
 
-
+app.MapControllers();
 app.UseCors("AllowAll");
 
 app.UseStaticFiles();
