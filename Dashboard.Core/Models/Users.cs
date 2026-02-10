@@ -20,7 +20,7 @@ namespace Dashboard.Core.Models
 
         public string? Country { get; set; }
 
-        // Navigation property for roles
         public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+        public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     }
 }

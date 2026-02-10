@@ -16,39 +16,39 @@
                     .UpdateAction("UpdateUser")
                     .DeleteAction("DeleteUser")
                     .Key("id")
-                    )
-                    .ShowBorders(true)
-                    .RowAlternationEnabled(true)
-                    .RemoteOperations(false)
-                    .Paging(p => p.PageSize(10))
-                    .SearchPanel(s => s.Visible(true))
-                    .Columns(columns =>
-                    {
-                        columns.Add()
-                    .DataField("username")
-                    .Caption("Username");
+            )
+            .ShowBorders(true)
+            .RowAlternationEnabled(true)
+            .RemoteOperations(false)
+            .Paging(p => p.PageSize(10))
+            .SearchPanel(s => s.Visible(true))
+            .Columns(columns =>
+            {
+                columns.Add()
+            .DataField("username")
+            .Caption("Username");
 
-                        columns.Add()
-                    .DataField("email")
-                    .Caption("Email");
+                columns.Add()
+            .DataField("email")
+            .Caption("Email");
 
-                        columns.Add()
-                    .DataField("roles")
-                    .Caption("Roles");
-                    })
-                    .Editing(edit => edit
-                    .Mode(GridEditMode.Popup)
-                    .AllowAdding(true)
-                    .AllowUpdating(true)
-                    .AllowDeleting(true)
-                    .ConfirmDelete(true)
-                    .Popup(p => p
+                columns.Add()
+            .DataField("roles")
+            .Caption("Roles");
+            })
+            .Editing(edit => edit
+            .Mode(GridEditMode.Popup)
+                .AllowAdding(true)
+                .AllowUpdating(true)
+                .AllowDeleting(true)
+                .ConfirmDelete(true)
+                .Popup(p => p
                     .MinWidth(300)
                     .MaxWidth(700)
                     .Height("auto")
                     .Title("Employee Info")
                     .ShowTitle(true)
-                    )
+                )
                     .Form(f => f.Items(items =>
                     {
                         items.AddSimple().DataField("username");
@@ -61,7 +61,7 @@
                     .DataSource(new[] { "User", "Admin", "SuperAdmin" })
                     );
                     }))
-                    )
+            )
                     )
     </div>
 </div>

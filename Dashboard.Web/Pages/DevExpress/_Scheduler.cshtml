@@ -1,0 +1,23 @@
+﻿@(Html.DevExtreme().Scheduler()
+    .ID("weekly-scheduler")
+    .DataSource(d => d.WebApi()
+        .Controller("AppointmentProxy")
+        .LoadAction("LoadAppointments")
+        .InsertAction("InsertAppointment")
+        .UpdateAction("UpdateAppointment")
+        .DeleteAction("DeleteAppointment")
+        .Key("id")
+    )
+    .Views(new[] {
+        SchedulerViewType.Day,
+        SchedulerViewType.Week
+    })
+    .CurrentView(SchedulerViewType.Week)
+    .CurrentDate(DateTime.Today)
+    .StartDayHour(8)
+    .EndDayHour(18)
+    .TextExpr("title")
+    .StartDateExpr("startDate")
+    .EndDateExpr("endDate")
+    .Height(600)
+)

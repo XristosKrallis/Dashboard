@@ -7,3 +7,12 @@ GET {{Dashboard.Api_HostAddress}}/api/users
 GET {{Dashboard.Api_HostAddress}}/api/users
 
 ###
+
+GET {{Dashboard.Api_HostAddress}}/api/appointments
+
+###
+
+GET {{Dashboard.Api_HostAddress}}/api/appointments
+{
+}
+###

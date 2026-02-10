@@ -46,6 +46,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Register services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IWorkHoursService, WorkHoursService>();
+builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 
 // Authorization policies
 builder.Services.AddAuthorization();
