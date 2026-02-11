@@ -64,8 +64,8 @@ namespace Dashboard.Core.Services
             if (user == null)
                 return null;
 
-            user.Username = dto.Username;
-            user.Email = dto.Email;
+            user.Username = dto.Username ?? user.Username;
+            user.Email = dto.Email ?? user.Email;
 
             _db.UserRoles.RemoveRange(user.UserRoles);
 

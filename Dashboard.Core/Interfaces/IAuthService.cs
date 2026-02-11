@@ -6,6 +6,7 @@ namespace Dashboard.Core.Interfaces
     {
         Task<LoginResult> LoginAsync(LoginRequest request);
         Task<RegisterResult> RegisterAsync(RegisterRequest request);
+        Task<UpdateResult> UpdateAsync(UpdateUserRequest request);
         //Task<bool> ForgotPasswordAsync(string email);
     }
 }

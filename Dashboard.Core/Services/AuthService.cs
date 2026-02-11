@@ -93,5 +93,47 @@ namespace Dashboard.Core.Services
                 UserId = user.Id
             };
         }
+
+        public async Task<UpdateResult> UpdateAsync(UpdateUserRequest request)
+        {
+            var user = await _db.Users
+                .FirstOrDefaultAsync(u => u.Id == request.UserId);
+
+            if (user == null)
+            {
+                return new UpdateResult
+                {
+                    Success = false,
+                    ErrorMessage = "User not found."
+                };
+            }
+
+            var emailExists = await _db.Users
+                .AnyAsync(u => u.Email == request.Email && u.Id != request.UserId);
+
+            if (emailExists)
+            {
+                return new UpdateResult
+                {
+                    Success = false,
+                    ErrorMessage = "Email already exists."
+                };
+            }
+
+            user.Username = request.Username;
+            user.Email = request.Email;
+
+            if (!string.IsNullOrWhiteSpace(request.NewPassword))
+            {
+                user.PasswordHash = _hasher.HashPassword(user, request.NewPassword);
+            }
+
+            await _db.SaveChangesAsync();
+
+            return new UpdateResult
+            {
+                Success = true
+            };
+        }
     }
 }

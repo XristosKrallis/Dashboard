@@ -5,14 +5,7 @@
 }
 
 <div class="grid-section">
-    @if (User.Identity.IsAuthenticated && (User.IsInRole("Admin") || User.IsInRole("SuperAdmin")))
-    {
-        <partial name="DevExpress/_UsersGrid" />
-    }
-    else
-    {
-        <p>You do not have permission to view this section.</p>
-    }
+    <partial name="DevExpress/_UsersGrid" />
     <partial name="DevExpress/_WorkhoursChart" />
     <partial name="DevExpress/_WorkhoursGrid" />
     <partial name="DevExpress/_Scheduler" />

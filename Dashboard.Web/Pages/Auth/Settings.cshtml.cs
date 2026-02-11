@@ -1,29 +1,37 @@
+using Dashboard.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using Dashboard.Core.DTOs;
 
 namespace Dashboard.Web.Pages.Auth
 {
     public class SettingsModel : PageModel
     {
-        [BindProperty]
-        [Required]
-        public string Username { get; set; }
+        private readonly IAuthService _authService;
+
+        public SettingsModel(IAuthService authService)
+        {
+            _authService = authService;
+        }
 
         [BindProperty]
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; }
+        [Required(ErrorMessage = "Username is required.")]
+        public string Username { get; set; } = string.Empty;
+
+        [BindProperty]
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Invalid email address.")]
+        public string Email { get; set; } = string.Empty;
 
         [BindProperty]
         [DataType(DataType.Password)]
-        public string NewPassword { get; set; }
+        public string? NewPassword { get; set; }
 
         [BindProperty]
         [DataType(DataType.Password)]
-        [Compare("NewPassword", ErrorMessage = "Passwords do not match.")]
-        public string ConfirmPassword { get; set; }
+        public string? ConfirmPassword { get; set; }
 
         [BindProperty]
         public bool ReceiveNotifications { get; set; }
@@ -31,36 +39,62 @@ namespace Dashboard.Web.Pages.Auth
         [BindProperty]
         public bool DarkMode { get; set; }
 
-        public string StatusMessage { get; set; }
+        public string? StatusMessage { get; set; }
 
-        public void OnGet()
+        public IActionResult OnGet()
         {
-            if (User.Identity.IsAuthenticated)
-            {
-                Username = User.Identity.Name ?? User.FindFirstValue(ClaimTypes.Name) ?? "";
+            if (!User.Identity?.IsAuthenticated ?? true)
+                return RedirectToPage("/Auth/Login");
 
-                Email = User.FindFirstValue(ClaimTypes.Email) ?? "";
+            Username = User.Identity?.Name
+                       ?? User.FindFirstValue(ClaimTypes.Name)
+                       ?? string.Empty;
 
-            }
-            else
-            {
-                RedirectToPage("/Auth/Login");
-            }
+            Email = User.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
+
+            return Page();
         }
 
-        public IActionResult OnPost()
+        public async Task<IActionResult> OnPost()
         {
+            if (!User.Identity?.IsAuthenticated ?? true)
+                return RedirectToPage("/Auth/Login");
+
+            if (!string.IsNullOrWhiteSpace(NewPassword))
+            {
+                if (NewPassword != ConfirmPassword)
+                {
+                    ModelState.AddModelError(nameof(ConfirmPassword),
+                        "Passwords do not match.");
+                }
+            }
+
             if (!ModelState.IsValid)
                 return Page();
 
-            if (!User.Identity.IsAuthenticated)
+            var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdValue, out var userId))
             {
                 return RedirectToPage("/Auth/Login");
             }
 
-            // Here you would save the updated info to your database or API
-            // Example:
-            // _userService.UpdateSettings(User.FindFirstValue(ClaimTypes.NameIdentifier), Username, Email, NewPassword, ReceiveNotifications, DarkMode);
+            var result = await _authService.UpdateAsync(new UpdateUserRequest
+            {
+                UserId = userId,
+                Username = Username,
+                Email = Email,
+                NewPassword = NewPassword
+            });
+
+            if (!result.Success)
+            {
+                ModelState.AddModelError(string.Empty, result.ErrorMessage ?? "Update failed.");
+                return Page();
+            }
+
+            NewPassword = null;
+            ConfirmPassword = null;
 
             StatusMessage = "Your settings have been saved successfully!";
             return Page();

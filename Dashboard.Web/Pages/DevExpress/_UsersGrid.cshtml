@@ -25,16 +25,29 @@
             .Columns(columns =>
             {
                 columns.Add()
-            .DataField("username")
-            .Caption("Username");
+                    .DataField("username")
+                    .Caption("Username")
+                    .ValidationRules(v =>
+                    {
+                        v.AddRequired().Message("Username is required");
+                    }); ;
 
                 columns.Add()
-            .DataField("email")
-            .Caption("Email");
+                    .DataField("email")
+                    .Caption("Email")
+                    .ValidationRules(v =>
+                    {
+                        v.AddRequired().Message("Email is required");
+                        v.AddEmail().Message("Invalid email format");
+                    }); ;
 
                 columns.Add()
-            .DataField("roles")
-            .Caption("Roles");
+                    .DataField("roles")
+                    .Caption("Roles")
+                    .ValidationRules(v =>
+                    {
+                        v.AddRequired().Message("At least one role is required");
+                    }); ;
             })
             .Editing(edit => edit
             .Mode(GridEditMode.Popup)

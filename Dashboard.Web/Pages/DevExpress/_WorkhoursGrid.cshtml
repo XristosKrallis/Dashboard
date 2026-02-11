@@ -74,6 +74,7 @@
                     }))
                     )
                 .OnSaving("onGridSaving")
+                .OnSaved("onGridSaved")
                 )
     </div>
 </div>
@@ -110,15 +111,24 @@
                 contentType: "application/json",
                 data: JSON.stringify(data),
                 success: function(response) {
+                    grid.cancelEditData();
                     grid.refresh();
                     chart.refresh();
-                    grid.cancelEditData();
-                },
-                error: function(err) {
-                    DevExpress.ui.notify("Error saving data", "error", 3000);
                 }
             });
         }
+    }
+</script>
+
+<script>
+        function onGridSaved(e) {
+        if (!e.changes || e.changes.length === 0) return;
+
+        var grid = $("#workhours-grid").dxDataGrid("instance");
+        var chart = $("#dailyWorkHoursChart").dxChart("instance");
+
+        grid.refresh();      
+        chart.refresh();     
     }
 </script>
 
