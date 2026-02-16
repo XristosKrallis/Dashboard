@@ -36,6 +36,12 @@ namespace Dashboard.Core.Services
 
         public async Task<UserDto> CreateAsync(UserDto dto)
         {
+            if (await _db.Users.AnyAsync(u => u.Username == dto.Username))
+                throw new InvalidOperationException("Username already exists.");
+
+            if (await _db.Users.AnyAsync(u => u.Email == dto.Email))
+                throw new InvalidOperationException("Email already exists.");
+
             var user = new User
             {
                 Username = dto.Username,
@@ -63,6 +69,18 @@ namespace Dashboard.Core.Services
 
             if (user == null)
                 return null;
+
+            if (!string.IsNullOrWhiteSpace(dto.Username))
+            {
+                if (await _db.Users.AnyAsync(u => u.Username == dto.Username && u.Id != id))
+                    throw new InvalidOperationException("Username already exists.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.Email))
+            {
+                if (await _db.Users.AnyAsync(u => u.Email == dto.Email && u.Id != id))
+                    throw new InvalidOperationException("Email already exists.");
+            }
 
             user.Username = dto.Username ?? user.Username;
             user.Email = dto.Email ?? user.Email;

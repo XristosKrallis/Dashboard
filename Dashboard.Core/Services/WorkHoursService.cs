@@ -32,11 +32,29 @@ namespace Dashboard.Core.Services
 
         public async Task<WorkHoursDto> CreateAsync(int userId, WorkHoursDto dto)
         {
-            Console.WriteLine($"WorkHours GET called for user ID: {dto.TimeOff}");
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto));
+
+            var totalHours = dto.RegularWork + dto.Overtime + dto.TimeOff;
+
+            if (totalHours > 13)
+                throw new InvalidOperationException("Total hours cannot exceed 13.");
+
+            if (totalHours < 0)
+                throw new InvalidOperationException("Total hours cannot be negative.");
+
+            var dateExists = await _db.WorkHours
+                .AnyAsync(w =>
+                    w.UserId == userId &&
+                    w.WorkDate.Date == dto.WorkDate.Date);
+
+            if (dateExists)
+                throw new InvalidOperationException("A work entry already exists for this date.");
+
             var entity = new WorkHours
             {
                 UserId = userId,
-                WorkDate = dto.WorkDate,
+                WorkDate = dto.WorkDate.Date,
                 RegularWork = dto.RegularWork,
                 Overtime = dto.Overtime,
                 TimeOff = dto.TimeOff
@@ -49,6 +67,7 @@ namespace Dashboard.Core.Services
             return dto;
         }
 
+
         public async Task<WorkHoursDto?> UpdateAsync(int userId, int id, WorkHoursDto dto)
         {
             var entity = await _db.WorkHours
@@ -57,7 +76,24 @@ namespace Dashboard.Core.Services
             if (entity == null)
                 return null;
 
-            entity.WorkDate = dto.WorkDate;
+            var totalHours = dto.RegularWork + dto.Overtime + dto.TimeOff;
+
+            if (totalHours > 13)
+                throw new InvalidOperationException("Total hours cannot exceed 13.");
+
+            if (totalHours < 0)
+                throw new InvalidOperationException("Total hours cannot be negative.");
+
+            var dateExists = await _db.WorkHours
+                .AnyAsync(w =>
+                    w.UserId == userId &&
+                    w.WorkDate.Date == dto.WorkDate.Date &&
+                    w.Id != id);
+
+            if (dateExists)
+                throw new InvalidOperationException("A work entry already exists for this date.");
+
+            entity.WorkDate = dto.WorkDate.Date;
             entity.RegularWork = dto.RegularWork;
             entity.Overtime = dto.Overtime;
             entity.TimeOff = dto.TimeOff;
@@ -73,6 +109,7 @@ namespace Dashboard.Core.Services
                 TimeOff = entity.TimeOff
             };
         }
+
 
         public async Task<bool> DeleteAsync(int userId, int id)
         {

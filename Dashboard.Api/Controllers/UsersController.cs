@@ -26,7 +26,6 @@ namespace Dashboard.Web.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<UserDto>> Post(UserDto dto)
         {
-            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(dto));
             var user = await _users.CreateAsync(dto);
             return CreatedAtAction(nameof(Get), new { id = user.Id }, user);
         }
@@ -34,7 +33,6 @@ namespace Dashboard.Web.Api.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult<UserDto>> Put(int id, UserDto dto)
         {
-            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(dto));
             var user = await _users.UpdateAsync(id, dto);
             return user == null ? NotFound() : Ok(user);
         }

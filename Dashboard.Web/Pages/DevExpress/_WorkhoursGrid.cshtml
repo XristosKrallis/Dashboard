@@ -58,20 +58,44 @@
                     .Title("Work Hours")
                     .ShowTitle(true)
                     )
-                    .Form(f => f.Items(items =>
+                .Form(f => f.Items(items =>
+                {
+                    items.AddSimple()
+                    .DataField("workDate")
+                    .Editor(e => e.DateBox()
+                    .Type(DateBoxType.Date)
+                    .DisplayFormat("yyyy-MM-dd")
+                    .DisabledDates(new JS("disableWorkDates"))
+                    )
+                    .ValidationRules(v =>
                     {
-                        items.AddSimple()
-                        .DataField("workDate")
-                        .Editor(e => e.DateBox()
-                        .Type(DateBoxType.Date)
-                        .DisplayFormat("yyyy-MM-dd")
-                        .DisabledDates(new JS("disableWorkDates"))
-                        );
+                        v.AddRequired().Message("Date is required.");
+                    });
 
-                        items.AddSimple().DataField("regularWork");
-                        items.AddSimple().DataField("overtime");
-                        items.AddSimple().DataField("timeOff");
-                    }))
+                    items.AddSimple()
+                    .DataField("regularWork")
+                    .Editor(e => e.NumberBox().Min(0))
+                    .ValidationRules(v =>
+                    {
+                        v.AddRequired().Message("Regular Work is required.");
+                    });
+
+                    items.AddSimple()
+                    .DataField("overtime")
+                    .Editor(e => e.NumberBox().Min(0))
+                    .ValidationRules(v =>
+                    {
+                        v.AddRequired().Message("Overtime is required.");
+                    });
+
+                    items.AddSimple()
+                    .DataField("timeOff")
+                    .Editor(e => e.NumberBox().Min(0))
+                    .ValidationRules(v =>
+                    {
+                        v.AddRequired().Message("Time Off is required.");
+                    });
+                }))
                     )
                 .OnSaving("onGridSaving")
                 .OnSaved("onGridSaved")
@@ -80,14 +104,14 @@
 </div>
 
 <script>
-    function onGridSaving(e) {
+        function onGridSaving(e) {
 
         if (!e.changes || e.changes.length === 0) return;
 
         var change = e.changes[0];
 
         if (change.type === "insert" || change.type === "update") {
-            e.cancel = true; 
+            e.cancel = true;
 
             var grid = $("#workhours-grid").dxDataGrid("instance");
             var chart = $("#dailyWorkHoursChart").dxChart("instance");
@@ -103,6 +127,26 @@
                 data = Object.assign({}, originalData, change.data, { id: change.key });
                 method = "PUT";
                 action = "/WorkHoursProxy/UpdateWorkHours";
+            }
+
+            var regular = Number(data.regularWork);
+            var overtime = Number(data.overtime);
+            var timeOff = Number(data.timeOff);
+
+            var total = regular + overtime + timeOff;
+
+            if (total > 13) {
+                DevExpress.ui.notify({
+                    message: "Total hours (Regular + Overtime + Time Off) cannot exceed 13 hours.",
+                    type: "error",
+                    displayTime: 4000,
+                    position: {
+                        at: "top center",
+                        my: "top center",
+                        of: window
+                    }
+                });
+                return;
             }
 
             $.ajax({

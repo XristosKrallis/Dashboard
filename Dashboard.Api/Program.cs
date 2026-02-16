@@ -1,3 +1,4 @@
+using Dashboard.Api.Middleware;
 using Dashboard.Core.Data;
 using Dashboard.Core.Interfaces;
 using Dashboard.Core.Services;
@@ -61,6 +62,8 @@ var app = builder.Build();
 app.UseCors("AllowFrontend");
 app.UseAuthentication(); // JWT middleware
 app.UseAuthorization();
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.MapControllers();
 
