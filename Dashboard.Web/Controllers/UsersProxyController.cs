@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 
 [Route("[controller]/[action]")]
+[ApiController]
 public class UsersProxyController : Controller
 {
     private readonly HttpClient _http;
@@ -43,7 +44,12 @@ public class UsersProxyController : Controller
         AttachJwtHeader(request);
 
         var response = await _http.SendAsync(request);
-        response.EnsureSuccessStatusCode();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorObj = await response.Content.ReadFromJsonAsync<object>();
+            return StatusCode((int)response.StatusCode, errorObj);
+        }
 
         var users = await response.Content.ReadFromJsonAsync<List<UserDto>>();
         return Json(users);
@@ -53,7 +59,6 @@ public class UsersProxyController : Controller
     public async Task<IActionResult> InsertUser([FromForm] IFormCollection form)
     {
         var valuesJson = form["values"];
-
         var dto = System.Text.Json.JsonSerializer.Deserialize<UserDto>(
             valuesJson,
             new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
@@ -63,22 +68,24 @@ public class UsersProxyController : Controller
         {
             Content = JsonContent.Create(dto)
         };
-
         AttachJwtHeader(request);
 
         var response = await _http.SendAsync(request);
-        response.EnsureSuccessStatusCode();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorObj = await response.Content.ReadFromJsonAsync<object>();
+            return StatusCode((int)response.StatusCode, errorObj);
+        }
 
         var user = await response.Content.ReadFromJsonAsync<UserDto>();
-        return Json(user);
+        return Ok(user);
     }
 
     [HttpPut]
     public async Task<IActionResult> UpdateUser([FromForm] int key, [FromForm] IFormCollection form)
     {
-
         var valuesJson = form["values"];
-
         var dto = System.Text.Json.JsonSerializer.Deserialize<UserDto>(
             valuesJson,
             new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
@@ -88,30 +95,34 @@ public class UsersProxyController : Controller
         {
             Content = JsonContent.Create(dto)
         };
-
         AttachJwtHeader(request);
 
         var response = await _http.SendAsync(request);
-        response.EnsureSuccessStatusCode();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorObj = await response.Content.ReadFromJsonAsync<object>();
+            return StatusCode((int)response.StatusCode, errorObj);
+        }
 
         var user = await response.Content.ReadFromJsonAsync<UserDto>();
-        return Json(user);
+        return Ok(user);
     }
 
     [HttpDelete]
     public async Task<IActionResult> DeleteUser([FromForm] int key)
     {
-        var request = new HttpRequestMessage(
-            HttpMethod.Delete,
-            $"https://localhost:7170/api/Users/{key}"
-        );
-
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"https://localhost:7170/api/Users/{key}");
         AttachJwtHeader(request);
 
         var response = await _http.SendAsync(request);
-        response.EnsureSuccessStatusCode();
 
-        return Json(new { success = true });
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorObj = await response.Content.ReadFromJsonAsync<object>();
+            return StatusCode((int)response.StatusCode, errorObj);
+        }
+
+        return Ok(new { success = true });
     }
-
 }

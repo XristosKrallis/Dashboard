@@ -3,7 +3,6 @@ using Dashboard.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
 using System.Security.Claims;
-using System.Security.Principal;
 
 [Route("[controller]/[action]")]
 [ApiController]
@@ -45,7 +44,12 @@ public class WorkHoursProxyController : Controller
         AttachJwtHeader(request);
 
         var response = await _http.SendAsync(request);
-        response.EnsureSuccessStatusCode();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorObj = await response.Content.ReadFromJsonAsync<object>();
+            return StatusCode((int)response.StatusCode, errorObj);
+        }
 
         var workHours = await response.Content.ReadFromJsonAsync<List<WorkHoursDto>>();
         return Json(workHours);
@@ -54,23 +58,27 @@ public class WorkHoursProxyController : Controller
     [HttpPost]
     public async Task<IActionResult> InsertWorkHours([FromBody] WorkHoursDto dto)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:7170/api/WorkHours")
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:7170/api/WorkHours")
         {
             Content = JsonContent.Create(dto)
         };
         AttachJwtHeader(request);
 
-        using var response = await _http.SendAsync(request);
-        response.EnsureSuccessStatusCode();
+        var response = await _http.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorObj = await response.Content.ReadFromJsonAsync<object>();
+            return StatusCode((int)response.StatusCode, errorObj);
+        }
 
         var workHours = await response.Content.ReadFromJsonAsync<WorkHoursDto>();
-        return Json(workHours);
+        return Ok(workHours);
     }
 
     [HttpPut]
     public async Task<IActionResult> UpdateWorkHours([FromBody] WorkHoursDto dto)
     {
-
         var request = new HttpRequestMessage(HttpMethod.Put, $"https://localhost:7170/api/WorkHours/{dto.Id}")
         {
             Content = JsonContent.Create(dto)
@@ -79,23 +87,32 @@ public class WorkHoursProxyController : Controller
         AttachJwtHeader(request);
 
         var response = await _http.SendAsync(request);
-        response.EnsureSuccessStatusCode();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorObj = await response.Content.ReadFromJsonAsync<object>();
+            return StatusCode((int)response.StatusCode, errorObj);
+        }
 
         var workHours = await response.Content.ReadFromJsonAsync<WorkHoursDto>();
-        return Json(workHours);
+        return Ok(workHours);
     }
 
     [HttpDelete]
     public async Task<IActionResult> DeleteWorkHours([FromForm] int key)
     {
-        Console.WriteLine($"ID:{key}");
         var request = new HttpRequestMessage(HttpMethod.Delete, $"https://localhost:7170/api/WorkHours/{key}");
         AttachJwtHeader(request);
 
         var response = await _http.SendAsync(request);
-        response.EnsureSuccessStatusCode();
 
-        return Json(new { success = true });
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorObj = await response.Content.ReadFromJsonAsync<object>();
+            return StatusCode((int)response.StatusCode, errorObj);
+        }
+
+        return Ok(new { success = true });
     }
 
     [HttpGet]
@@ -106,7 +123,12 @@ public class WorkHoursProxyController : Controller
         AttachJwtHeader(request);
 
         var response = await _http.SendAsync(request);
-        response.EnsureSuccessStatusCode();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorObj = await response.Content.ReadFromJsonAsync<object>();
+            return StatusCode((int)response.StatusCode, errorObj);
+        }
 
         var workHours = await response.Content.ReadFromJsonAsync<List<WorkHoursDto>>();
 
@@ -118,7 +140,7 @@ public class WorkHoursProxyController : Controller
         {
             var entry = workHours.FirstOrDefault(w => w.WorkDate.Date == date.Date);
 
-            return new 
+            return new
             {
                 WorkDate = date.ToString("yyyy-MM-dd"),
                 RegularWork = entry?.RegularWork ?? 0,

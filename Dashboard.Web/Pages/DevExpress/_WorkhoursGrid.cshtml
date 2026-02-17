@@ -158,6 +158,26 @@
                     grid.cancelEditData();
                     grid.refresh();
                     chart.refresh();
+                },
+                error: function(xhr) {
+           
+                    var message = "An error occurred.";
+                    try {
+                        var err = JSON.parse(xhr.responseText);
+                        if (err.error) {
+                            message = err.error;  
+                        }
+                    } catch {
+                        message = xhr.responseText;
+                    }
+
+                    DevExpress.ui.notify({
+                        message: message,
+                        type: "error",
+                        displayTime: 4000,
+                        position: { at: "top center", my: "top center", of: window }
+                    });
+
                 }
             });
         }
