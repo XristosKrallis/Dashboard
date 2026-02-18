@@ -1,4 +1,5 @@
-﻿namespace Dashboard.Core.Models
+﻿
+namespace Dashboard.Core.Models
 {
     public class Appointment
     {
@@ -8,7 +9,6 @@
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public bool AllDay { get; set; } = false;
-
         public User User { get; set; } = null!;
     }
 }

@@ -5,7 +5,7 @@ namespace Dashboard.Core.Interfaces
 {
     public interface IAppointmentService
     {
-        Task<List<SchedulerAppointmentDto>> GetAppointmentsAsync(int userId);
+        Task<IEnumerable<SchedulerAppointmentDto>> GetAppointmentsAsync(int userId);
         Task<SchedulerAppointmentDto> InsertAppointmentAsync(int userId, SchedulerAppointmentDto dto);
         Task<SchedulerAppointmentDto?> UpdateAppointmentAsync(int userId, SchedulerAppointmentDto dto);
         Task<bool> DeleteAppointmentAsync(int userId, int id);

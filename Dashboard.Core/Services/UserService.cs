@@ -1,150 +1,106 @@
-﻿
-using Dashboard.Core.Data;
+﻿using Dashboard.Core.Data;
 using Dashboard.Core.DTOs;
 using Dashboard.Core.Interfaces;
 using Dashboard.Core.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dashboard.Core.Services
+public class UserService : CrudService<User, int>, IUserService
 {
-    public class UserService : IUserService
+    private readonly AppDbContext _db;
+
+    public UserService(AppDbContext db) : base(db)
     {
-        private readonly AppDbContext _db;
+        _db = db;
+    }
 
-        public UserService(AppDbContext db)
+    public override async Task<IEnumerable<User>> GetAllAsync()
+    {
+        var users = await _db.Users
+            .Include(u => u.UserRoles)
+            .ThenInclude(ur => ur.Role)
+            .ToListAsync();
+
+        return users;
+    }
+
+    public override async Task<User> CreateAsync(User entity)
+    {
+        if (await _db.Users.AnyAsync(u => u.Username == entity.Username))
+            throw new InvalidOperationException("Username already exists.");
+
+        if (await _db.Users.AnyAsync(u => u.Email == entity.Email))
+            throw new InvalidOperationException("Email already exists.");
+
+        entity.PasswordHash = new PasswordHasher<User>().HashPassword(entity, "Default123!");
+
+        await base.CreateAsync(entity);
+
+        var rolesToAssign = entity.UserRoles?.Select(ur => ur.Role.Name).ToList() ?? new List<string> { "User" };
+        await AssignRolesAsync(entity.Id, rolesToAssign);
+
+        return entity;
+    }
+
+    public override async Task<User> UpdateAsync(User entity)
+    {
+        var user = await _db.Users.Include(u => u.UserRoles).FirstOrDefaultAsync(u => u.Id == entity.Id);
+        if (user == null) throw new InvalidOperationException("User not found.");
+
+        if (!string.IsNullOrWhiteSpace(entity.Username) &&
+            await _db.Users.AnyAsync(u => u.Username == entity.Username && u.Id != entity.Id))
+            throw new InvalidOperationException("Username already exists.");
+
+        if (!string.IsNullOrWhiteSpace(entity.Email) &&
+            await _db.Users.AnyAsync(u => u.Email == entity.Email && u.Id != entity.Id))
+            throw new InvalidOperationException("Email already exists.");
+
+        user.Username = entity.Username ?? user.Username;
+        user.Email = entity.Email ?? user.Email;
+
+        _db.UserRoles.RemoveRange(user.UserRoles);
+        await AssignRolesAsync(user.Id, entity.UserRoles?.Select(ur => ur.Role.Name).ToList());
+
+        await base.UpdateAsync(user);
+        return user;
+    }
+
+    public async Task<UserDto> ToDtoAsync(User entity)
+    {
+        var user = await _db.Users
+            .Include(u => u.UserRoles)
+            .ThenInclude(ur => ur.Role)
+            .FirstAsync(u => u.Id == entity.Id);
+
+        return new UserDto
         {
-            _db = db;
-        }
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            Roles = user.UserRoles.Select(r => r.Role.Name).ToList()
+        };
+    }
 
-        public async Task<IEnumerable<UserDto>> GetAllAsync()
-        {
-            return await _db.Users
-                .Include(u => u.UserRoles)
-                .ThenInclude(ur => ur.Role)
-                .Select(u => new UserDto
-                {
-                    Id = u.Id,
-                    Username = u.Username,
-                    Email = u.Email,
-                    Roles = u.UserRoles
-                        .Select(r => r.Role.Name)
-                        .ToList()
-                })
-                .ToListAsync();
-        }
+    private async Task AssignRolesAsync(int userId, List<string>? roleNames)
+    {
+        if (roleNames == null || !roleNames.Any())
+            return;
 
-        public async Task<UserDto> CreateAsync(UserDto dto)
-        {
-            if (await _db.Users.AnyAsync(u => u.Username == dto.Username))
-                throw new InvalidOperationException("Username already exists.");
+        var existingRoles = _db.UserRoles.Where(ur => ur.UserId == userId);
+        _db.UserRoles.RemoveRange(existingRoles);
 
-            if (await _db.Users.AnyAsync(u => u.Email == dto.Email))
-                throw new InvalidOperationException("Email already exists.");
+        var roles = await _db.Roles
+            .Where(r => roleNames.Contains(r.Name))
+            .ToListAsync();
 
-            var user = new User
+        _db.UserRoles.AddRange(
+            roles.Select(r => new UserRole
             {
-                Username = dto.Username,
-                Email = dto.Email,
-                PasswordHash = new PasswordHasher<User>().HashPassword(null, "Default123!")
-            };
+                UserId = userId,
+                RoleId = r.Id
+            })
+        );
 
-            _db.Users.Add(user);
-            await _db.SaveChangesAsync();
-
-            var rolesToAssign = (dto.Roles == null || dto.Roles.Count == 0)
-                        ? new List<string> { "User" }
-                        : dto.Roles;
-
-            await AssignRolesAsync(user.Id, rolesToAssign);
-
-            return await GetUserDtoAsync(user.Id);
-        }
-
-        public async Task<UserDto?> UpdateAsync(int id, UserDto dto)
-        {
-            var user = await _db.Users
-                .Include(u => u.UserRoles)
-                .FirstOrDefaultAsync(u => u.Id == id);
-
-            if (user == null)
-                return null;
-
-            if (!string.IsNullOrWhiteSpace(dto.Username))
-            {
-                if (await _db.Users.AnyAsync(u => u.Username == dto.Username && u.Id != id))
-                    throw new InvalidOperationException("Username already exists.");
-            }
-
-            if (!string.IsNullOrWhiteSpace(dto.Email))
-            {
-                if (await _db.Users.AnyAsync(u => u.Email == dto.Email && u.Id != id))
-                    throw new InvalidOperationException("Email already exists.");
-            }
-
-            user.Username = dto.Username ?? user.Username;
-            user.Email = dto.Email ?? user.Email;
-
-            _db.UserRoles.RemoveRange(user.UserRoles);
-
-            await AssignRolesAsync(user.Id, dto.Roles);
-            await _db.SaveChangesAsync();
-
-            return await GetUserDtoAsync(user.Id);
-        }
-
-        public async Task<bool> DeleteAsync(int id)
-        {
-            var user = await _db.Users
-                .Include(u => u.UserRoles)
-                .FirstOrDefaultAsync(u => u.Id == id);
-
-            if (user == null)
-                return false;
-
-            _db.UserRoles.RemoveRange(user.UserRoles);
-            _db.Users.Remove(user);
-
-            await _db.SaveChangesAsync();
-            return true;
-        }
-
-        private async Task AssignRolesAsync(int userId, List<string>? roleNames)
-        {
-            if (roleNames == null || roleNames.Count == 0)
-                return;
-
-            var roles = await _db.Roles
-                .Where(r => roleNames.Contains(r.Name))
-                .ToListAsync();
-
-            _db.UserRoles.AddRange(
-                roles.Select(r => new UserRole
-                {
-                    UserId = userId,
-                    RoleId = r.Id
-                })
-            );
-
-            await _db.SaveChangesAsync();
-        }
-
-        private async Task<UserDto> GetUserDtoAsync(int userId)
-        {
-            return await _db.Users
-                .Include(u => u.UserRoles)
-                .ThenInclude(ur => ur.Role)
-                .Where(u => u.Id == userId)
-                .Select(u => new UserDto
-                {
-                    Id = u.Id,
-                    Username = u.Username,
-                    Email = u.Email,
-                    Roles = u.UserRoles
-                        .Select(r => r.Role.Name)
-                        .ToList()
-                })
-                .FirstAsync();
-        }
+        await _db.SaveChangesAsync();
     }
 }

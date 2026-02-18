@@ -15,7 +15,7 @@ namespace Dashboard.Core.Services
             _db = db;
         }
 
-        public async Task<List<SchedulerAppointmentDto>> GetAppointmentsAsync(int userId)
+        public async Task<IEnumerable<SchedulerAppointmentDto>> GetAppointmentsAsync(int userId)
         {
             return await _db.Appointments
                 .Where(a => a.UserId == userId) 

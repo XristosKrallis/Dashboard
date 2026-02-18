@@ -34,7 +34,7 @@ namespace Dashboard.Api.Controllers
 
             if (startDate == null || endDate == null)
             {
-                workHours = await _workhours.GetAllAsync(userId);
+                workHours = await _workhours.GetByUserDtoAsync(userId);
             }
             else
             {
@@ -48,23 +48,72 @@ namespace Dashboard.Api.Controllers
         public async Task<ActionResult<WorkHoursDto>> Post(WorkHoursDto dto)
         {
             var userId = GetCurrentUserId();
-            var workHours = await _workhours.CreateAsync(userId, dto);
-            return CreatedAtAction(nameof(Get), new { id = workHours.Id }, workHours);
+
+            var entity = new Core.Models.WorkHours
+            {
+                UserId = userId,
+                WorkDate = dto.WorkDate,
+                RegularWork = dto.RegularWork,
+                Overtime = dto.Overtime,
+                TimeOff = dto.TimeOff
+            };
+
+            var createdEntity = await _workhours.CreateAsync(entity);
+
+            var resultDto = new WorkHoursDto
+            {
+                Id = createdEntity.Id,
+                WorkDate = createdEntity.WorkDate,
+                RegularWork = createdEntity.RegularWork,
+                Overtime = createdEntity.Overtime,
+                TimeOff = createdEntity.TimeOff
+            };
+
+            return CreatedAtAction(nameof(Get), new { id = resultDto.Id }, resultDto);
         }
 
         [HttpPut("{id}")]
         public async Task<ActionResult<WorkHoursDto>> Put(int id, WorkHoursDto dto)
         {
             var userId = GetCurrentUserId();
-            var workHours = await _workhours.UpdateAsync(userId, id, dto);
-            return workHours == null ? NotFound() : Ok(workHours);
+
+            var entity = new Core.Models.WorkHours
+            {
+                Id = id,
+                UserId = userId,
+                WorkDate = dto.WorkDate,
+                RegularWork = dto.RegularWork,
+                Overtime = dto.Overtime,
+                TimeOff = dto.TimeOff
+            };
+
+            var updatedEntity = await _workhours.UpdateAsync(entity);
+
+            if (updatedEntity == null)
+                return NotFound();
+
+            var resultDto = new WorkHoursDto
+            {
+                Id = updatedEntity.Id,
+                WorkDate = updatedEntity.WorkDate,
+                RegularWork = updatedEntity.RegularWork,
+                Overtime = updatedEntity.Overtime,
+                TimeOff = updatedEntity.TimeOff
+            };
+
+            return Ok(resultDto);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             var userId = GetCurrentUserId();
-            var success = await _workhours.DeleteAsync(userId, id);
+
+            var entity = await _workhours.GetByIdAsync(id);
+            if (entity == null || entity.UserId != userId)
+                return NotFound();
+
+            var success = await _workhours.DeleteAsync(id);
             return success ? NoContent() : NotFound();
         }
     }

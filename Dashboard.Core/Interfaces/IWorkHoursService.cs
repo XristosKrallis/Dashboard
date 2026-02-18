@@ -1,13 +1,9 @@
 ﻿using Dashboard.Core.DTOs;
+using Dashboard.Core.Interfaces;
+using Dashboard.Core.Models;
 
-namespace Dashboard.Core.Interfaces
+public interface IWorkHoursService : ICrudService<WorkHours, int>
 {
-    public interface IWorkHoursService
-    {
-        Task<IEnumerable<WorkHoursDto>> GetAllAsync(int userId);
-        Task<WorkHoursDto> CreateAsync(int userId, WorkHoursDto dto);
-        Task<WorkHoursDto?> UpdateAsync(int userId, int id, WorkHoursDto dto);
-        Task<bool> DeleteAsync(int userId, int id);
-        Task<IEnumerable<WorkHoursDto>> GetByDateRangeAsync(int userId, DateTime startDate, DateTime endDate); 
-    }
+    Task<IEnumerable<WorkHoursDto>> GetByUserDtoAsync(int userId);
+    Task<IEnumerable<WorkHoursDto>> GetByDateRangeAsync(int userId, DateTime startDate, DateTime endDate);
 }

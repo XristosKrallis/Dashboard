@@ -1,6 +1,8 @@
-﻿namespace Dashboard.Core.Models
+﻿using Dashboard.Core.Interfaces;
+
+namespace Dashboard.Core.Models
 {
-    public class WorkHours
+    public class WorkHours : IEntity<int>
     {
         public int Id { get; set; }
         public int RegularWork { get; set; }

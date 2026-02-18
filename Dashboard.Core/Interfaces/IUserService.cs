@@ -1,12 +1,10 @@
 ﻿using Dashboard.Core.DTOs;
+using Dashboard.Core.Models;
 
 namespace Dashboard.Core.Interfaces
 {
-    public interface IUserService
+    public interface IUserService : ICrudService<User, int>
     {
-        Task<IEnumerable<UserDto>> GetAllAsync();
-        Task<UserDto> CreateAsync(UserDto dto);
-        Task<UserDto?> UpdateAsync(int id, UserDto dto);
-        Task<bool> DeleteAsync(int id);
+        Task<UserDto> ToDtoAsync(User entity);
     }
 }

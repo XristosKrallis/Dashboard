@@ -1,8 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Dashboard.Core.Interfaces;
+using System.ComponentModel.DataAnnotations;
 
 namespace Dashboard.Core.Models
 {
-    public class User
+    public class User : IEntity<int>
     {
         [Key]
         public int Id { get; set; }
